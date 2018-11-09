@@ -1054,7 +1054,7 @@ QString Settings::getHueLightsURL()
 unsigned int Settings::getMaxBrightnessUntilThresholdValue()
 {
     DEBUG_LOW_LEVEL << Q_FUNC_INFO;
-    unsigned int result = unsigned(value(Profile::Key::HueLights::URL).toInt());
+    unsigned int result = unsigned(value(Profile::Key::HueLights::MaxBrightnessUntilThresholdValue).toInt());
     if (result > 100)
     {
         return 100;
@@ -1064,12 +1064,12 @@ unsigned int Settings::getMaxBrightnessUntilThresholdValue()
 unsigned int Settings::getInitialWaitForResponeTimeMs()
 {
     DEBUG_LOW_LEVEL << Q_FUNC_INFO;
-    return unsigned(value(Profile::Key::HueLights::URL).toInt());
+    return unsigned(value(Profile::Key::HueLights::InitialWaitForResponeTimeMs).toInt());
 }
 unsigned int Settings::getRepeatedWaitForResponseTimeMs()
 {
     DEBUG_LOW_LEVEL << Q_FUNC_INFO;
-    return unsigned(value(Profile::Key::HueLights::URL).toInt());
+    return unsigned(value(Profile::Key::HueLights::RepeatedWaitForResponeTimeMs).toInt());
 }
 
 

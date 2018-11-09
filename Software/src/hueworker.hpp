@@ -25,6 +25,7 @@ protected:
     QString m_HueURL;
     unsigned int m_repeatedWaitForResponseTimeMs;
     unsigned int m_initialWaitForResponseTimeMs;
+    unsigned int m_maxBrightnessUntilThresholdValue;
 };
 
 

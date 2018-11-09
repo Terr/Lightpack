@@ -14,7 +14,8 @@ HueWorker::HueWorker(const QList<StructRgb> *colors)
       m_isBusy(false),
       m_HueURL(Settings::getHueLightsURL()),
       m_repeatedWaitForResponseTimeMs(Settings::getRepeatedWaitForResponseTimeMs()),
-      m_initialWaitForResponseTimeMs(Settings::getInitialWaitForResponeTimeMs())
+      m_initialWaitForResponseTimeMs(Settings::getInitialWaitForResponeTimeMs()),
+      m_maxBrightnessUntilThresholdValue(Settings::getMaxBrightnessUntilThresholdValue())
 {
     qDebug() << "HueWorker: started";
 }
@@ -23,13 +24,13 @@ HueWorker::HueWorker(const QList<StructRgb> *colors)
  * Scale the brightness up so that 30% brightness of colors means 100% brightness on the Hue lights.
  * This negates the effect that the Hue will appear dark most of the time but will dimm the lights for very dark (black) scenes
  */
-static double brightnessHeuristic(double Y)
+static double brightnessHeuristic(double Y, unsigned int treshold)
 {
-    if(Y >= 30)
+    if(Y >= treshold)
     {
         return 255;
     }
-    return round((Y / 30) * 255);
+    return round((Y / treshold) * 255);
 }
 
 void HueWorker::setHueColorsInner()
@@ -47,7 +48,7 @@ void HueWorker::setHueColorsInner()
     QJsonArray xy;
     xy << x << y;
     json.insert("xy", xy);
-    json.insert("bri", brightnessHeuristic(xyzColors.y));
+    json.insert("bri", brightnessHeuristic(xyzColors.y, m_maxBrightnessUntilThresholdValue));
     QNetworkAccessManager nam;
 
     qDebug() << "HueWorker: sending request";
@@ -56,10 +57,13 @@ void HueWorker::setHueColorsInner()
 
     // sleep for (Default 75) ms since a reply is not expected much earlier
     QThread::msleep(m_initialWaitForResponseTimeMs);
+    qDebug() << "HueWorker: waiting for " << m_initialWaitForResponseTimeMs << "until checking for response";
+
 
     m_isBusy = true;
     while(!reply->isFinished())
     {
+        qDebug() << "HueWorker: waiting for " << m_repeatedWaitForResponseTimeMs << "until checking again";
         QThread::msleep(m_repeatedWaitForResponseTimeMs);
         QCoreApplication::processEvents();
     }
