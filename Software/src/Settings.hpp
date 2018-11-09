@@ -156,6 +156,12 @@ public:
 	static void setLuminosityThreshold(int value);
 	static bool isMinimumLuminosityEnabled();
 	static void setMinimumLuminosityEnabled(bool value);
+    // [HueLights]
+    static QString getHueLightsURL();
+    static unsigned int getMaxBrightnessUntilThresholdValue();
+    static unsigned int getInitialWaitForResponeTimeMs();
+    static unsigned int getRepeatedWaitForResponseTimeMs();
+
 	// [Device]
 	static int getDeviceRefreshDelay();
 	static void setDeviceRefreshDelay(int value);

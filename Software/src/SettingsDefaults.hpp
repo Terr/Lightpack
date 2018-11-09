@@ -172,6 +172,14 @@ static const int LiquidSpeedMin = 1;
 static const int LiquidSpeedDefault = 10;
 static const int LiquidSpeedMax = 100;
 }
+// [HueLights]
+namespace HueLights
+{
+static const QString URLDefault = "";
+static const unsigned int MaxBrightnessUntilThresholdValueDefault = 30;
+static const unsigned int InitialWaitForResponeTimeMsDefault = 75;
+static const unsigned int RepeatedWaitForResponeTimeMsDefault = 25;
+}
 // [Device]
 namespace Device
 {

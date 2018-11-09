@@ -22,6 +22,9 @@ protected:
     void setHueColorsInner();
     const QList<StructRgb> *m_colorPtr;
     bool m_isBusy;
+    QString m_HueURL;
+    unsigned int m_repeatedWaitForResponseTimeMs;
+    unsigned int m_initialWaitForResponseTimeMs;
 };
 
 

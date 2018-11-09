@@ -173,6 +173,14 @@ static const QString MaxColor = "SoundVisualizer/MaxColor";
 static const QString IsLiquidMode = "SoundVisualizer/LiquidMode";
 static const QString LiquidSpeed = "SoundVisualizer/LiquidSpeed";
 }
+// [HueLights]
+namespace HueLights
+{
+static const QString URL = "HueLights/URL";
+static const QString MaxBrightnessUntilThresholdValue = "HueLights/MaxBrightnessUntilThresholdValue";
+static const QString InitialWaitForResponeTimeMs = "HueLights/InitialWaitForResponeTimeMs";
+static const QString RepeatedWaitForResponeTimeMs = "HueLights/RepeatedWaitForResponeTimeMs";
+}
 // [Device]
 namespace Device
 {
@@ -1038,6 +1046,33 @@ void Settings::setMinimumLuminosityEnabled(bool value)
 	m_this->minimumLuminosityEnabledChanged(value);
 }
 
+QString Settings::getHueLightsURL()
+{
+    DEBUG_LOW_LEVEL << Q_FUNC_INFO;
+    return value(Profile::Key::HueLights::URL).toString();
+}
+unsigned int Settings::getMaxBrightnessUntilThresholdValue()
+{
+    DEBUG_LOW_LEVEL << Q_FUNC_INFO;
+    unsigned int result = unsigned(value(Profile::Key::HueLights::URL).toInt());
+    if (result > 100)
+    {
+        return 100;
+    }
+    return result;
+}
+unsigned int Settings::getInitialWaitForResponeTimeMs()
+{
+    DEBUG_LOW_LEVEL << Q_FUNC_INFO;
+    return unsigned(value(Profile::Key::HueLights::URL).toInt());
+}
+unsigned int Settings::getRepeatedWaitForResponseTimeMs()
+{
+    DEBUG_LOW_LEVEL << Q_FUNC_INFO;
+    return unsigned(value(Profile::Key::HueLights::URL).toInt());
+}
+
+
 int Settings::getDeviceRefreshDelay()
 {
 	return getValidDeviceRefreshDelay(value(Profile::Key::Device::RefreshDelay).toInt());
@@ -1675,6 +1710,11 @@ void Settings::initCurrentProfile(bool isResetDefault)
 	setNewOption(Profile::Key::SoundVisualizer::IsLiquidMode,		Profile::SoundVisualizer::IsLiquidModeDefault, isResetDefault);
 	setNewOption(Profile::Key::SoundVisualizer::LiquidSpeed,		Profile::SoundVisualizer::LiquidSpeedDefault, isResetDefault);
 #endif
+    // [HueLights]
+    setNewOption(Profile::Key::HueLights::URL,                                     Profile::HueLights::URLDefault, isResetDefault);
+    setNewOption(Profile::Key::HueLights::MaxBrightnessUntilThresholdValue,        Profile::HueLights::MaxBrightnessUntilThresholdValueDefault, isResetDefault);
+    setNewOption(Profile::Key::HueLights::InitialWaitForResponeTimeMs,             Profile::HueLights::InitialWaitForResponeTimeMsDefault, isResetDefault);
+    setNewOption(Profile::Key::HueLights::RepeatedWaitForResponeTimeMs,            Profile::HueLights::RepeatedWaitForResponeTimeMsDefault, isResetDefault);
 	// [Device]
 	setNewOption(Profile::Key::Device::RefreshDelay,				Profile::Device::RefreshDelayDefault, isResetDefault);
 	setNewOption(Profile::Key::Device::IsUsbPowerLedDisabled,		Profile::Device::IsUsbPowerLedDisabled, isResetDefault);
