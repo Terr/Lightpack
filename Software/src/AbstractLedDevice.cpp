@@ -29,6 +29,7 @@
 #include "PrismatikMath.hpp"
 #include "Settings.hpp"
 
+
 void AbstractLedDevice::setGamma(double value, bool updateColors) {
 	m_gamma = value;
 	if (updateColors)
@@ -77,7 +78,9 @@ void AbstractLedDevice::updateDeviceSettings()
 	All modifications are made over extended 12bit RGB, so \code outColors \endcode will contain 12bit
 	RGB instead of 8bit.
 */
-void AbstractLedDevice::applyColorModifications(const QList<QRgb> &inColors, QList<StructRgb> &outColors) {
+void AbstractLedDevice::applyColorModifications(const QList<QRgb> &inColors, QList<StructRgb> &outColors)
+{
+    qDebug() << "applyColorModifications()";
 
 	bool isApplyWBAdjustments = m_wbAdjustments.count() == inColors.count();
 
@@ -125,4 +128,7 @@ void AbstractLedDevice::applyColorModifications(const QList<QRgb> &inColors, QLi
 		}
 	}
 
+    // this is the most convenient place to trigger the Hue lights color change
+    emit(setHueColors());
+    qDebug() << "HueWorker: Emitted signal to change color!";
 }

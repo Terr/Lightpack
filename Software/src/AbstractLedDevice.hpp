@@ -29,6 +29,7 @@
 #include <QtGui>
 #include "colorspace_types.h"
 #include "types.h"
+#include "hueworker.hpp"
 
 /*!
 	Abstract class representing any LED device.
@@ -38,14 +39,29 @@ class AbstractLedDevice : public QObject
 {
 	Q_OBJECT
 public:
-	AbstractLedDevice(QObject * parent) : QObject(parent) {}
-	virtual ~AbstractLedDevice(){}
+    AbstractLedDevice(QObject * parent) : QObject(parent)
+    {
+        m_hueThread = new QThread( );
+        m_hueWorker = new HueWorker(&m_colorsBuffer);
+        m_hueWorker->moveToThread(m_hueThread);
+        //connect(hueThread, SIGNAL(started()), hueWorker, SLOT(doWork()));
+        //connect(hueWorker, SIGNAL(workFinished()), hueThread, SLOT(quit()));
+
+        connect(this, SIGNAL(setHueColors()), m_hueWorker, SLOT(setHueColors()));
+
+        //delete objects when work is done
+        //connect(hueThread, SIGNAL(finished()), hueWorker, SLOT(deleteLater()));
+        //connect(hueThread, SIGNAL(finished()), hueThread, SLOT(deleteLater()));
+
+        m_hueThread->start();
+    }
+    virtual ~AbstractLedDevice() {}
 
 signals:
 	void openDeviceSuccess(bool isSuccess);
 	void ioDeviceSuccess(bool isSuccess);
 	void firmwareVersion(const QString & fwVersion);
-	void firmwareVersionUnofficial(const int version);
+    void firmwareVersionUnofficial(const int version);
 
 	/*!
 		This signal must be sent at the completion of each command
@@ -54,9 +70,10 @@ signals:
 	*/
 	void commandCompleted(bool ok);
 	void colorsUpdated(QList<QRgb> colors);
+    void setHueColors();
 
 public slots:
-	virtual const QString name() const = 0;
+    virtual const QString name() const = 0;
 	virtual void open() = 0;
 	virtual void close() = 0;
 	virtual void setColors(const QList<QRgb> & colors) = 0;
@@ -93,6 +110,7 @@ public slots:
 protected:
 	virtual void applyColorModifications(const QList<QRgb> & inColors, QList<StructRgb> & outColors);
 
+
 protected:
 	QString m_colorSequence;
 	double m_gamma;
@@ -104,4 +122,10 @@ protected:
 
 	QList<QRgb> m_colorsSaved;
 	QList<StructRgb> m_colorsBuffer;
+
+    // Hue
+    bool m_isHueEnabled = true;
+    QThread* m_hueThread;
+    HueWorker* m_hueWorker;
+
 };

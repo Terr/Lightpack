@@ -219,7 +219,8 @@ SOURCES += \
     wizard/CustomDistributor.cpp \
     systrayicon/SysTrayIcon.cpp \
     UpdatesProcessor.cpp \
-    LightpackCommandLineParser.cpp
+    LightpackCommandLineParser.cpp \
+    HueWorker.cpp
 
 HEADERS += \
     LightpackApplication.hpp \
@@ -271,7 +272,8 @@ HEADERS += \
     wizard/CustomDistributor.hpp \
     systrayicon/SysTrayIcon.hpp \
     UpdatesProcessor.hpp \
-    LightpackCommandLineParser.hpp
+    LightpackCommandLineParser.hpp \
+    hueworker.hpp
 
 contains(DEFINES,BASS_SOUND_SUPPORT) {
     SOURCES += SoundManager.cpp
