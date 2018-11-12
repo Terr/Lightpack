@@ -26,6 +26,7 @@ protected:
     unsigned int m_repeatedWaitForResponseTimeMs;
     unsigned int m_initialWaitForResponseTimeMs;
     unsigned int m_maxBrightnessUntilThresholdValue;
+    unsigned int m_hueTransitionTime;
 };
 
 

@@ -161,6 +161,7 @@ public:
     static unsigned int getMaxBrightnessUntilThresholdValue();
     static unsigned int getInitialWaitForResponeTimeMs();
     static unsigned int getRepeatedWaitForResponseTimeMs();
+    static unsigned int getHueTransitionTime();
 
 	// [Device]
 	static int getDeviceRefreshDelay();

@@ -180,6 +180,7 @@ static const QString URL = "HueLights/URL";
 static const QString MaxBrightnessUntilThresholdValue = "HueLights/MaxBrightnessUntilThresholdValue";
 static const QString InitialWaitForResponeTimeMs = "HueLights/InitialWaitForResponeTimeMs";
 static const QString RepeatedWaitForResponeTimeMs = "HueLights/RepeatedWaitForResponeTimeMs";
+static const QString HueTransitionTime = "HueLights/HueTransitionTime";
 }
 // [Device]
 namespace Device
@@ -1051,6 +1052,7 @@ QString Settings::getHueLightsURL()
     DEBUG_LOW_LEVEL << Q_FUNC_INFO;
     return value(Profile::Key::HueLights::URL).toString();
 }
+
 unsigned int Settings::getMaxBrightnessUntilThresholdValue()
 {
     DEBUG_LOW_LEVEL << Q_FUNC_INFO;
@@ -1061,15 +1063,23 @@ unsigned int Settings::getMaxBrightnessUntilThresholdValue()
     }
     return result;
 }
+
 unsigned int Settings::getInitialWaitForResponeTimeMs()
 {
     DEBUG_LOW_LEVEL << Q_FUNC_INFO;
     return unsigned(value(Profile::Key::HueLights::InitialWaitForResponeTimeMs).toInt());
 }
+
 unsigned int Settings::getRepeatedWaitForResponseTimeMs()
 {
     DEBUG_LOW_LEVEL << Q_FUNC_INFO;
     return unsigned(value(Profile::Key::HueLights::RepeatedWaitForResponeTimeMs).toInt());
+}
+
+unsigned int Settings::getHueTransitionTime()
+{
+    DEBUG_LOW_LEVEL << Q_FUNC_INFO;
+    return unsigned(value(Profile::Key::HueLights::HueTransitionTime).toInt());
 }
 
 
@@ -1715,6 +1725,7 @@ void Settings::initCurrentProfile(bool isResetDefault)
     setNewOption(Profile::Key::HueLights::MaxBrightnessUntilThresholdValue,        Profile::HueLights::MaxBrightnessUntilThresholdValueDefault, isResetDefault);
     setNewOption(Profile::Key::HueLights::InitialWaitForResponeTimeMs,             Profile::HueLights::InitialWaitForResponeTimeMsDefault, isResetDefault);
     setNewOption(Profile::Key::HueLights::RepeatedWaitForResponeTimeMs,            Profile::HueLights::RepeatedWaitForResponeTimeMsDefault, isResetDefault);
+    setNewOption(Profile::Key::HueLights::HueTransitionTime,                          Profile::HueLights::HueTransitionTime, isResetDefault);
 	// [Device]
 	setNewOption(Profile::Key::Device::RefreshDelay,				Profile::Device::RefreshDelayDefault, isResetDefault);
 	setNewOption(Profile::Key::Device::IsUsbPowerLedDisabled,		Profile::Device::IsUsbPowerLedDisabled, isResetDefault);

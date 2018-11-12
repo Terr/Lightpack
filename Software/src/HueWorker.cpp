@@ -15,7 +15,8 @@ HueWorker::HueWorker(const QList<StructRgb> *colors)
       m_HueURL(Settings::getHueLightsURL()),
       m_repeatedWaitForResponseTimeMs(Settings::getRepeatedWaitForResponseTimeMs()),
       m_initialWaitForResponseTimeMs(Settings::getInitialWaitForResponeTimeMs()),
-      m_maxBrightnessUntilThresholdValue(Settings::getMaxBrightnessUntilThresholdValue())
+      m_maxBrightnessUntilThresholdValue(Settings::getMaxBrightnessUntilThresholdValue()),
+      m_hueTransitionTime(Settings::getHueTransitionTime())
 {
     qDebug() << "HueWorker: started";
 }
@@ -48,6 +49,7 @@ void HueWorker::setHueColorsInner()
     QJsonArray xy;
     xy << x << y;
     json.insert("xy", xy);
+    json.insert("transitiontime", (int)m_hueTransitionTime);    // temporary setting that will make the Philips Hue change colors faster
     json.insert("bri", brightnessHeuristic(xyzColors.y, m_maxBrightnessUntilThresholdValue));
     QNetworkAccessManager nam;
 
