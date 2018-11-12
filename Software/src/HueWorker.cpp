@@ -2,19 +2,17 @@
 
 #include <QDebug>
 #include "PrismatikMath.hpp"
-#include <QtNetwork>
 #include "Settings.hpp"
 
 using namespace SettingsScope;
 
 
-HueWorker::HueWorker(const QList<StructRgb> *colors)
+HueWorker::HueWorker(const QList<StructRgb> *colors, QNetworkAccessManager* nam)
     :
       m_colorPtr(colors),
+      m_nam(nam),
       m_isBusy(false),
       m_HueURL(Settings::getHueLightsURL()),
-      m_repeatedWaitForResponseTimeMs(Settings::getRepeatedWaitForResponseTimeMs()),
-      m_initialWaitForResponseTimeMs(Settings::getInitialWaitForResponeTimeMs()),
       m_maxBrightnessUntilThresholdValue(Settings::getMaxBrightnessUntilThresholdValue()),
       m_hueTransitionTime(Settings::getHueTransitionTime())
 {
@@ -51,30 +49,22 @@ void HueWorker::setHueColorsInner()
     json.insert("xy", xy);
     json.insert("transitiontime", (int)m_hueTransitionTime);    // temporary setting that will make the Philips Hue change colors faster
     json.insert("bri", brightnessHeuristic(xyzColors.y, m_maxBrightnessUntilThresholdValue));
-    QNetworkAccessManager nam;
 
     qDebug() << "HueWorker: sending request";
-    QNetworkReply *reply = nam.put(request, QJsonDocument(json).toJson());
-    qDebug() << "HueWorker: waiting for reply of Hue Bridge";
-
-    // sleep for (Default 75) ms since a reply is not expected much earlier
-    QThread::msleep(m_initialWaitForResponseTimeMs);
-    qDebug() << "HueWorker: waiting for " << m_initialWaitForResponseTimeMs << "until checking for response";
-
-
     m_isBusy = true;
-    while(!reply->isFinished())
-    {
-        qDebug() << "HueWorker: waiting for " << m_repeatedWaitForResponseTimeMs << "until checking again";
-        QThread::msleep(m_repeatedWaitForResponseTimeMs);
-        QCoreApplication::processEvents();
-    }
-    m_isBusy = false;
-    qDebug() << "HueWorker: got reply of Hue Bridge";
-    reply->deleteLater();
+    m_nam->put(request, QJsonDocument(json).toJson());
+    qDebug() << "HueWorker: busy, waiting for reply of Hue Bridge";
 
-
+    connect(m_nam, SIGNAL(finished(QNetworkReply*)), this, SLOT(replyFinished(QNetworkReply*)));
 }
+
+void HueWorker::replyFinished(QNetworkReply* reply)
+{
+    m_isBusy = false;
+    reply->deleteLater();
+    qDebug() << "HueWorker: finished request, not busy";
+}
+
 void HueWorker::setHueColors()
 {
     qDebug() << "HueWorker: signaled to change color";

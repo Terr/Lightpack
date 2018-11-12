@@ -177,8 +177,6 @@ namespace HueLights
 {
 static const QString URLDefault = "";
 static const unsigned int MaxBrightnessUntilThresholdValueDefault = 30;
-static const unsigned int InitialWaitForResponeTimeMsDefault = 75;
-static const unsigned int RepeatedWaitForResponeTimeMsDefault = 25;
 static const unsigned int HueTransitionTime = 2;
 }
 // [Device]

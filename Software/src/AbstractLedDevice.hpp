@@ -46,12 +46,13 @@ public:
     {
         if(Settings::getHueLightsURL() != "")
         {
-            m_hueThread = new QThread( );
-            m_hueWorker = new HueWorker(&m_colorsBuffer);
+            m_hueThread = new QThread();
+            m_nam = new QNetworkAccessManager();
+            m_hueWorker = new HueWorker(&m_colorsBuffer, m_nam);
             m_hueWorker->moveToThread(m_hueThread);
+            m_nam->moveToThread(m_hueThread);
 
             connect(this, SIGNAL(setHueColors()), m_hueWorker, SLOT(setHueColors()));
-
             m_hueThread->start();
         }
     }
@@ -127,5 +128,6 @@ protected:
     bool m_isHueEnabled = true;
     QThread* m_hueThread;
     HueWorker* m_hueWorker;
+    QNetworkAccessManager* m_nam;
 
 };

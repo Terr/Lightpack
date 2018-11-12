@@ -178,8 +178,6 @@ namespace HueLights
 {
 static const QString URL = "HueLights/URL";
 static const QString MaxBrightnessUntilThresholdValue = "HueLights/MaxBrightnessUntilThresholdValue";
-static const QString InitialWaitForResponeTimeMs = "HueLights/InitialWaitForResponeTimeMs";
-static const QString RepeatedWaitForResponeTimeMs = "HueLights/RepeatedWaitForResponeTimeMs";
 static const QString HueTransitionTime = "HueLights/HueTransitionTime";
 }
 // [Device]
@@ -1064,18 +1062,6 @@ unsigned int Settings::getMaxBrightnessUntilThresholdValue()
     return result;
 }
 
-unsigned int Settings::getInitialWaitForResponeTimeMs()
-{
-    DEBUG_LOW_LEVEL << Q_FUNC_INFO;
-    return unsigned(value(Profile::Key::HueLights::InitialWaitForResponeTimeMs).toInt());
-}
-
-unsigned int Settings::getRepeatedWaitForResponseTimeMs()
-{
-    DEBUG_LOW_LEVEL << Q_FUNC_INFO;
-    return unsigned(value(Profile::Key::HueLights::RepeatedWaitForResponeTimeMs).toInt());
-}
-
 unsigned int Settings::getHueTransitionTime()
 {
     DEBUG_LOW_LEVEL << Q_FUNC_INFO;
@@ -1723,8 +1709,6 @@ void Settings::initCurrentProfile(bool isResetDefault)
     // [HueLights]
     setNewOption(Profile::Key::HueLights::URL,                                     Profile::HueLights::URLDefault, isResetDefault);
     setNewOption(Profile::Key::HueLights::MaxBrightnessUntilThresholdValue,        Profile::HueLights::MaxBrightnessUntilThresholdValueDefault, isResetDefault);
-    setNewOption(Profile::Key::HueLights::InitialWaitForResponeTimeMs,             Profile::HueLights::InitialWaitForResponeTimeMsDefault, isResetDefault);
-    setNewOption(Profile::Key::HueLights::RepeatedWaitForResponeTimeMs,            Profile::HueLights::RepeatedWaitForResponeTimeMsDefault, isResetDefault);
     setNewOption(Profile::Key::HueLights::HueTransitionTime,                          Profile::HueLights::HueTransitionTime, isResetDefault);
 	// [Device]
 	setNewOption(Profile::Key::Device::RefreshDelay,				Profile::Device::RefreshDelayDefault, isResetDefault);
