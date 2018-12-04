@@ -32,36 +32,54 @@
 
 class LedDeviceAdalight : public AbstractLedDevice
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	LedDeviceAdalight(const QString &portName, const int baudRate, QObject * parent = 0);
-	virtual ~LedDeviceAdalight();
+    LedDeviceAdalight(const QString &portName, const int baudRate, QObject * parent = 0);
+    virtual ~LedDeviceAdalight();
 
 public slots:
-	const QString name() const { return "adalight"; }
-	void open();
-	void close();
-	void setColors(const QList<QRgb> & /*colors*/);
-	void switchOffLeds();
-	void setRefreshDelay(int /*value*/);
-	void setColorDepth(int /*value*/);
-	void setSmoothSlowdown(int /*value*/);
-	void setColorSequence(QString value);
-	void requestFirmwareVersion();
-	void updateDeviceSettings();
-	int maxLedsCount() { return 511; }
-	virtual int defaultLedsCount() { return 25; }
+    const QString name() const { return "adalight"; }
+    void open();
+    void close();
+    void setColors(const QList<QRgb> & /*colors*/);
+    void switchOffLeds();
+    void setRefreshDelay(int /*value*/);
+    void setColorDepth(int /*value*/);
+    void setSmoothSlowdown(int /*value*/);
+    void setColorSequence(QString value);
+    void requestFirmwareVersion();
+    void updateDeviceSettings();
+    int maxLedsCount() { return 511; }
+    virtual int defaultLedsCount() { return 25; }
+
+private slots:
+    void updateSmoothColorsTick();
 
 private:
-	bool writeBuffer(const QByteArray & buff);
-	void resizeColorsBuffer(int buffSize);
-	void reinitBufferHeader(int ledsCount);
+    bool writeBuffer(const QByteArray & buff);
+    void resizeColorsBuffer(int buffSize);
+    void reinitBufferHeader(int ledsCount);
+
+    // smoothing methods
+    void updateSmoothColors();
+    void initColors(const QList<QRgb> & colors);
+    void UpdateTargetColor(const QList<QRgb> & colors);
 
 private:
-	QSerialPort *m_AdalightDevice;
+    QSerialPort *m_AdalightDevice;
+    QByteArray m_writeBufferHeader;
+    QByteArray m_writeBuffer;
+    QString m_portName;
+    int m_baudRate;
 
-	QByteArray m_writeBufferHeader;
-	QByteArray m_writeBuffer;
-	QString m_portName;
-	int m_baudRate;
+    // smoothing variables
+    QList<QRgb> targetColors;
+    QList<QRgb> currColors;
+    QTimer *m_smoothTimer = nullptr;
+    std::vector<StructRgb> rgbCur, rgbTarget;
+    std::vector<StructLabF> labCur, labTarget;
+    std::vector<StructXyz> xyzCur, xyzTarget;
+    std::vector<std::vector<double>> step_sizes;
+
+
 };
