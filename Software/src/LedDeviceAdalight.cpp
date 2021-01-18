@@ -236,65 +236,6 @@ void LedDeviceAdalight::UpdateTargetColor(const QList<QRgb> & colors)
 
 void LedDeviceAdalight::setColors(const QList<QRgb> & colors)
 {
-    /*
-	// Save colors for showing changes of the brightness
-	m_colorsSaved = colors;
-
-	resizeColorsBuffer(colors.count());
-
-	applyColorModifications(colors, m_colorsBuffer);
-	applyDithering(m_colorsBuffer, 8);
-
-	m_writeBuffer.clear();
-	m_writeBuffer.append(m_writeBufferHeader);
-
-	for (int i = 0; i < m_colorsBuffer.count(); i++)
-	{
-		StructRgb color = m_colorsBuffer[i];
-
-		if (m_colorSequence == QStringLiteral("RBG"))
-		{
-			m_writeBuffer.append(color.r);
-			m_writeBuffer.append(color.b);
-			m_writeBuffer.append(color.g);
-		}
-		else if (m_colorSequence == QStringLiteral("BRG"))
-		{
-			m_writeBuffer.append(color.b);
-			m_writeBuffer.append(color.r);
-			m_writeBuffer.append(color.g);
-		}
-		else if (m_colorSequence == QStringLiteral("BGR"))
-		{
-			m_writeBuffer.append(color.b);
-			m_writeBuffer.append(color.g);
-			m_writeBuffer.append(color.r);
-		}
-		else if (m_colorSequence == QStringLiteral("GRB"))
-		{
-			m_writeBuffer.append(color.g);
-			m_writeBuffer.append(color.r);
-			m_writeBuffer.append(color.b);
-		}
-		else if (m_colorSequence == QStringLiteral("GBR"))
-		{
-			m_writeBuffer.append(color.g);
-			m_writeBuffer.append(color.b);
-			m_writeBuffer.append(color.r);
-		}
-		else
-		{
-			m_writeBuffer.append(color.r);
-			m_writeBuffer.append(color.g);
-			m_writeBuffer.append(color.b);
-		}
-	}
-
-	bool ok = writeBuffer(m_writeBuffer);
-
-	emit commandCompleted(ok);
-    */
-
     // TODO: add as setting
     const int intervalMs = 20;      // time between two intermediate colors
 
