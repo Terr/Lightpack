@@ -343,4 +343,97 @@ namespace PrismatikMath
 		// derived from theoreticalMaxFrameRate()
 		return (30.0 * ledCount + 60) / (1.0 / frameRate - 0.00003 * ledCount);
 	}
+
+
+	// the following conversions are copied from https://github.com/berendeanicolae/ColorSpace
+	// slight adjustments were made to prevent RGB values from over/underflowing
+
+    void RgbToXyz(StructRgb const& rgb, StructXyz& result)
+    {
+        double r = rgb.r / 255.0;
+        double g = rgb.g / 255.0;
+        double b = rgb.b / 255.0;
+
+        r = ((r > 0.04045) ? pow((r + 0.055) / 1.055, 2.4) : (r / 12.92)) * 100.0;
+        g = ((g > 0.04045) ? pow((g + 0.055) / 1.055, 2.4) : (g / 12.92)) * 100.0;
+        b = ((b > 0.04045) ? pow((b + 0.055) / 1.055, 2.4) : (b / 12.92)) * 100.0;
+
+        result.x = r*0.4124564 + g*0.3575761 + b*0.1804375;
+        result.y = r*0.2126729 + g*0.7151522 + b*0.0721750;
+        result.z = r*0.0193339 + g*0.1191920 + b*0.9503041;
+    }
+
+    void XyzToLab(StructXyz const& xyz, StructLabF& result)
+    {
+        double x = xyz.x / 95.047;
+        double y = xyz.y / 100.00;
+        double z = xyz.z / 108.883;
+
+        x = (x > 0.008856) ? cbrt(x) : (7.787 * x + 16.0 / 116.0);
+        y = (y > 0.008856) ? cbrt(y) : (7.787 * y + 16.0 / 116.0);
+        z = (z > 0.008856) ? cbrt(z) : (7.787 * z + 16.0 / 116.0);
+
+        result.l = (116.0 * y) - 16;
+        result.a = 500 * (x - y);
+        result.b = 200 * (y - z);
+    }
+
+    void LabToXyz(StructLabF const& lab, StructXyz& result)
+    {
+        double y = (lab.l + 16.0) / 116.0;
+        double x = lab.a / 500.0 + y;
+        double z = y - lab.b / 200.0;
+
+        double x3 = x*x*x;
+        double y3 = y*y*y;
+        double z3 = z*z*z;
+
+        result.x = ((x3 > 0.008856) ? x3 : ((x - 16.0 / 116.0) / 7.787)) * 95.047;
+        result.y = ((y3 > 0.008856) ? y3 : ((y - 16.0 / 116.0) / 7.787)) * 100.0;
+        result.z = ((z3 > 0.008856) ? z3 : ((z - 16.0 / 116.0) / 7.787)) * 108.883;
+    }
+
+    void XyzToRgb(StructXyz const& xyz, StructRgb& result)
+    {
+        double x = xyz.x / 100.0;
+        double y = xyz.y / 100.0;
+        double z = xyz.z / 100.0;
+
+        double r = x * 3.2404542 + y * -1.5371385 + z * -0.4985314;
+        double g = x * -0.9692660 + y * 1.8760108 + z * 0.0415560;
+        double b = x * 0.0556434 + y * -0.2040259 + z * 1.0572252;
+
+		if(r < 0)
+		{
+			r = 0;
+		}
+		if(g < 0)
+		{
+			g = 0;
+		}
+		if(b < 0)
+		{
+			b = 0;
+		}
+
+		double pow_r = (1.055*pow(r, 1 / 2.4) - 0.055);
+		double pow_g = (1.055*pow(g, 1 / 2.4) - 0.055);
+		double pow_b = (1.055*pow(b, 1 / 2.4) - 0.055);
+
+		if(pow_r > 1)
+		{
+			pow_r = 1;
+		}
+		if(pow_g > 1)
+		{
+			pow_g = 1;
+		}
+		if(pow_b > 1)
+		{
+			pow_b = 1;
+		}
+        result.r = ((r > 0.0031308) ? pow_r : (12.92*r)) * 255.0;
+        result.g = ((g > 0.0031308) ? pow_g : (12.92*g)) * 255.0;
+        result.b = ((b > 0.0031308) ? pow_b : (12.92*b)) * 255.0;
+    }
 }

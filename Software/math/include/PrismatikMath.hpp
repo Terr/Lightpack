@@ -55,6 +55,11 @@ namespace PrismatikMath
 	double theoreticalMaxFrameRate(const double ledCount, const double baudRate);
 	double theoreticalMinBaudRate(const double ledCount, const double frameRate);
 
+	void LabToXyz(StructLabF const& lab, StructXyz& result);
+    void XyzToRgb(StructXyz const& xyz, StructRgb& result);
+    void XyzToLab(StructXyz const& xyz, StructLabF& result);
+    void RgbToXyz(StructRgb const& rgb, StructXyz& result);
+
 	// Convert ASCII char '5' to 5
 	inline char getDigit(const char d)
 	{

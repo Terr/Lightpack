@@ -32,7 +32,7 @@
 
 class LedDeviceAdalight : public AbstractLedDevice
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
 	LedDeviceAdalight(const QString &portName, const int baudRate, QObject * parent = 0);
 	virtual ~LedDeviceAdalight();
@@ -54,17 +54,34 @@ public slots:
 	void writeLastWill();
 	void writeLastWill(const bool force);
 
-private:
-	bool writeBuffer(const QByteArray & buff);
-	void resizeColorsBuffer(int buffSize);
-	void reinitBufferHeader(int ledsCount);
+private slots:
+    void updateSmoothColorsTick();
 
 private:
-	QSerialPort *m_AdalightDevice;
+    bool writeBuffer(const QByteArray & buff);
+    void resizeColorsBuffer(int buffSize);
+    void reinitBufferHeader(int ledsCount);
 
-	QByteArray m_writeBufferHeader;
-	QByteArray m_writeBuffer;
-	QString m_portName;
-	int m_baudRate;
+    // smoothing methods
+    void updateSmoothColors();
+    void initColors(const QList<QRgb> & colors);
+    void UpdateTargetColor(const QList<QRgb> & colors);
+
+private:
+    QSerialPort *m_AdalightDevice;
+    QByteArray m_writeBufferHeader;
+    QByteArray m_writeBuffer;
+    QString m_portName;
+    int m_baudRate;
+
+    // smoothing variables
+    QList<QRgb> targetColors;
+    QList<QRgb> currColors;
+    QTimer *m_smoothTimer = nullptr;
+    std::vector<StructRgb> rgbCur, rgbTarget;
+    std::vector<StructLabF> labCur, labTarget;
+    std::vector<StructXyz> xyzCur, xyzTarget;
+    std::vector<std::vector<double>> step_sizes;
+
 	QTimer* m_lastWillTimer{nullptr};
 };

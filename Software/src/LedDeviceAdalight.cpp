@@ -35,10 +35,10 @@ using namespace SettingsScope;
 
 LedDeviceAdalight::LedDeviceAdalight(const QString &portName, const int baudRate, QObject *parent) : AbstractLedDevice(parent)
 {
-	DEBUG_LOW_LEVEL << Q_FUNC_INFO;
+    DEBUG_LOW_LEVEL << Q_FUNC_INFO;
 
-	m_portName = portName;
-	m_baudRate = baudRate;
+    m_portName = portName;
+    m_baudRate = baudRate;
 
 //	m_gamma = Settings::getDeviceGamma();
 //	m_brightness = Settings::getDeviceBrightness();
@@ -49,7 +49,8 @@ LedDeviceAdalight::LedDeviceAdalight(const QString &portName, const int baudRate
 	connect(m_lastWillTimer, &QTimer::timeout, this, qOverload<>(&LedDeviceAdalight::writeLastWill));
 	// TODO: think about init m_savedColors in all ILedDevices
 
-	DEBUG_LOW_LEVEL << Q_FUNC_INFO << "initialized";
+    // TODO: think about init m_savedColors in all ILedDevices
+    DEBUG_LOW_LEVEL << Q_FUNC_INFO << "initialized";
 }
 
 LedDeviceAdalight::~LedDeviceAdalight()
@@ -78,8 +79,164 @@ void LedDeviceAdalight::close()
 	m_AdalightDevice = NULL;
 }
 
+static double getUpdatedValue(double from, double to, double step)
+{
+    if(from < to)
+    {
+        from += step;
+        if(from > to)
+        {
+            return to;
+        }
+    }
+    else
+    {
+        from -= step;
+        if(from < to)
+        {
+            return to;
+        }
+    }
+    return from;
+}
+
+
+void LedDeviceAdalight::updateSmoothColors()
+{
+    for(int i = 0; i < currColors.size(); i++)
+    {
+        // calculate updated intermediate color in Lab color space for a pleasent blending of colors
+        labCur[i].l = getUpdatedValue(labCur[i].l, labTarget[i].l, step_sizes[i][0]);
+        labCur[i].a = getUpdatedValue(labCur[i].a, labTarget[i].a, step_sizes[i][1]);
+        labCur[i].b = getUpdatedValue(labCur[i].b, labTarget[i].b, step_sizes[i][2]);
+
+        // update currColors with the resulting RGB values
+        PrismatikMath::LabToXyz(labCur[i], xyzCur[i]);
+        PrismatikMath::XyzToRgb(xyzCur[i], rgbCur[i]);
+        currColors[i] = qRgb(rgbCur[i].r, rgbCur[i].g, rgbCur[i].b);
+    }
+}
+
+void LedDeviceAdalight::updateSmoothColorsTick()
+{
+    DEBUG_LOW_LEVEL << Q_FUNC_INFO;
+
+    // Save colors for showing changes of the brightness
+    m_colorsSaved = currColors;
+
+    resizeColorsBuffer(currColors.count());
+
+    updateSmoothColors();
+
+    applyColorModifications(currColors, m_colorsBuffer);
+
+    m_writeBuffer.clear();
+    m_writeBuffer.append(m_writeBufferHeader);
+
+    for (int i = 0; i < m_colorsBuffer.count(); i++)
+    {
+        StructRgb color = m_colorsBuffer[i];
+
+        color.r = color.r >> 4;
+        color.g = color.g >> 4;
+        color.b = color.b >> 4;
+
+        if (m_colorSequence == "RBG")
+        {
+            m_writeBuffer.append(color.r);
+            m_writeBuffer.append(color.b);
+            m_writeBuffer.append(color.g);
+        }
+        else if (m_colorSequence == "BRG")
+        {
+            m_writeBuffer.append(color.b);
+            m_writeBuffer.append(color.r);
+            m_writeBuffer.append(color.g);
+        }
+        else if (m_colorSequence == "BGR")
+        {
+            m_writeBuffer.append(color.b);
+            m_writeBuffer.append(color.g);
+            m_writeBuffer.append(color.r);
+        }
+        else if (m_colorSequence == "GRB")
+        {
+            m_writeBuffer.append(color.g);
+            m_writeBuffer.append(color.r);
+            m_writeBuffer.append(color.b);
+        }
+        else if (m_colorSequence == "GBR")
+        {
+            m_writeBuffer.append(color.g);
+            m_writeBuffer.append(color.b);
+            m_writeBuffer.append(color.r);
+        }
+        else
+        {
+            m_writeBuffer.append(color.r);
+            m_writeBuffer.append(color.g);
+            m_writeBuffer.append(color.b);
+        }
+    }
+
+    bool ok = writeBuffer(m_writeBuffer);
+
+    emit commandCompleted(ok);
+}
+
+void LedDeviceAdalight::initColors(const QList<QRgb> & colors)
+{
+    currColors = colors;
+
+    labCur = std::vector<StructLabF>(currColors.count());
+    labTarget = std::vector<StructLabF>(currColors.count());
+    xyzCur = std::vector<StructXyz>(currColors.count());
+    xyzTarget = std::vector<StructXyz>(currColors.count());
+    rgbCur = std::vector<StructRgb>(currColors.count());
+    rgbTarget = std::vector<StructRgb>(currColors.count());
+
+    for(int i = 0; i < currColors.size(); i++)
+    {
+        rgbCur[i].r = (unsigned)qRed(currColors[i]);
+        rgbCur[i].g = (unsigned)qGreen(currColors[i]);
+        rgbCur[i].b = (unsigned)qBlue(currColors[i]);
+        PrismatikMath::RgbToXyz(rgbCur[i], xyzCur[i]);
+        PrismatikMath::XyzToLab(xyzCur[i], labCur[i]);
+    }
+    step_sizes = std::vector<std::vector<double>>(currColors.count());
+}
+
+void LedDeviceAdalight::UpdateTargetColor(const QList<QRgb> & colors)
+{
+    // TODO: add as setting
+    const int numTransitions = 15;  // number of intermediate colors
+
+    targetColors = colors;
+    for(int i = 0; i < targetColors.size(); i++)
+    {
+        rgbTarget[i].r = qRed(targetColors[i]);
+        rgbTarget[i].g = qGreen(targetColors[i]);
+        rgbTarget[i].b = qBlue(targetColors[i]);
+        PrismatikMath::RgbToXyz(rgbTarget[i], xyzTarget[i]);
+        PrismatikMath::XyzToLab(xyzTarget[i], labTarget[i]);
+    }
+
+
+    // calculate step sizes between currColors and targetColors
+    for(int i = 0; i < targetColors.size(); i++)
+    {
+        step_sizes[i] =
+        {
+            abs((labTarget[i].l - labCur[i].l) / numTransitions),
+            abs((labTarget[i].a - labCur[i].a) / numTransitions),
+            abs((labTarget[i].b - labCur[i].b) / numTransitions)
+        };
+    }
+}
+
 void LedDeviceAdalight::setColors(const QList<QRgb> & colors)
 {
+    /*
 	// Save colors for showing changes of the brightness
 	m_colorsSaved = colors;
 
@@ -136,50 +293,70 @@ void LedDeviceAdalight::setColors(const QList<QRgb> & colors)
 	bool ok = writeBuffer(m_writeBuffer);
 
 	emit commandCompleted(ok);
+    */
+
+    // TODO: add as setting
+    const int intervalMs = 20;      // time between two intermediate colors
+
+    if (!m_smoothTimer)
+    {
+        m_smoothTimer = new QTimer(this);
+        // coarse timer (default) can vary strongly. We don't need to be precise but 20ms resulted in mostly 30+ ms with the coarse timer.
+        m_smoothTimer->setTimerType(Qt::PreciseTimer);
+        connect(m_smoothTimer, SIGNAL(timeout()), this, SLOT(updateSmoothColorsTick()));
+        m_smoothTimer->setInterval(intervalMs);
+    }
+    if(!currColors.count() && colors.count())
+    {
+        initColors(colors);
+        m_smoothTimer->start();
+    }
+
+    UpdateTargetColor(colors);
 }
 
 void LedDeviceAdalight::switchOffLeds()
 {
-	int count = m_colorsSaved.count();
-	m_colorsSaved.clear();
+    int count = m_colorsSaved.count();
+    m_colorsSaved.clear();
 
-	for (int i = 0; i < count; i++)
-		m_colorsSaved << 0;
+    for (int i = 0; i < count; i++)
+        m_colorsSaved << 0;
 
-	m_writeBuffer.clear();
-	m_writeBuffer.append(m_writeBufferHeader);
+    m_writeBuffer.clear();
+    m_writeBuffer.append(m_writeBufferHeader);
 
-	for (int i = 0; i < count; i++) {
-		m_writeBuffer.append((char)0)
-						.append((char)0)
-						.append((char)0);
-	}
+    for (int i = 0; i < count; i++) {
+        m_writeBuffer.append((char)0)
+                        .append((char)0)
+                        .append((char)0);
+    }
 
-	bool ok = writeBuffer(m_writeBuffer);
-	emit commandCompleted(ok);
+    bool ok = writeBuffer(m_writeBuffer);
+    emit commandCompleted(ok);
 }
 
 void LedDeviceAdalight::setRefreshDelay(int /*value*/)
 {
-	emit commandCompleted(true);
+    emit commandCompleted(true);
 }
 
 void LedDeviceAdalight::setColorDepth(int /*value*/)
 {
-	emit commandCompleted(true);
+    emit commandCompleted(true);
 }
 
 void LedDeviceAdalight::setSmoothSlowdown(int /*value*/)
 {
-	emit commandCompleted(true);
+    emit commandCompleted(true);
 }
 
 void LedDeviceAdalight::setColorSequence(const QString& value)
 {
-	DEBUG_LOW_LEVEL << Q_FUNC_INFO << value;
+    DEBUG_LOW_LEVEL << Q_FUNC_INFO << value;
 
-	m_colorSequence = value;
-	setColors(m_colorsSaved);
+    m_colorSequence = value;
+    setColors(m_colorsSaved);
 }
 
 void LedDeviceAdalight::requestFirmwareVersion()
@@ -190,15 +367,15 @@ void LedDeviceAdalight::requestFirmwareVersion()
 
 void LedDeviceAdalight::updateDeviceSettings()
 {
-	DEBUG_LOW_LEVEL << Q_FUNC_INFO;
+    DEBUG_LOW_LEVEL << Q_FUNC_INFO;
 
-	AbstractLedDevice::updateDeviceSettings();
-	setColorSequence(Settings::getColorSequence(SupportedDevices::DeviceTypeAdalight));
+    AbstractLedDevice::updateDeviceSettings();
+    setColorSequence(Settings::getColorSequence(SupportedDevices::DeviceTypeAdalight));
 }
 
 void LedDeviceAdalight::open()
 {
-	DEBUG_LOW_LEVEL << Q_FUNC_INFO << sender();
+    DEBUG_LOW_LEVEL << Q_FUNC_INFO << sender();
 
 //	m_gamma = Settings::getDeviceGamma();
 //	m_brightness = Settings::getDeviceBrightness();
@@ -270,10 +447,10 @@ void LedDeviceAdalight::writeLastWill(const bool force)
 
 bool LedDeviceAdalight::writeBuffer(const QByteArray & buff)
 {
-	DEBUG_MID_LEVEL << Q_FUNC_INFO << "Hex:" << buff.toHex();
+    DEBUG_MID_LEVEL << Q_FUNC_INFO << "Hex:" << buff.toHex();
 
-	if (m_AdalightDevice == NULL || m_AdalightDevice->isOpen() == false)
-		return false;
+    if (m_AdalightDevice == NULL || m_AdalightDevice->isOpen() == false)
+        return false;
 
 	if (m_AdalightDevice->bytesToWrite() > 0) {
 		DEBUG_MID_LEVEL << Q_FUNC_INFO << "Serial bytesToWrite:" << m_AdalightDevice->bytesToWrite() << ", skipping current frame";
@@ -287,49 +464,49 @@ bool LedDeviceAdalight::writeBuffer(const QByteArray & buff)
 
 	int bytesWritten = m_AdalightDevice->write(buff);
 
-	if (bytesWritten != buff.count())
-	{
-		qWarning() << Q_FUNC_INFO << "bytesWritten != buff.count():" << bytesWritten << buff.count() << " " << m_AdalightDevice->errorString();
-		return false;
-	}
+    if (bytesWritten != buff.count())
+    {
+        qWarning() << Q_FUNC_INFO << "bytesWritten != buff.count():" << bytesWritten << buff.count() << " " << m_AdalightDevice->errorString();
+        return false;
+    }
 
-	return true;
+    return true;
 }
 
 void LedDeviceAdalight::resizeColorsBuffer(int buffSize)
 {
-	if (m_colorsBuffer.count() == buffSize)
-		return;
+    if (m_colorsBuffer.count() == buffSize)
+        return;
 
-	m_colorsBuffer.clear();
+    m_colorsBuffer.clear();
 
-	if (buffSize > MaximumNumberOfLeds::Adalight)
-	{
-		qCritical() << Q_FUNC_INFO << "buffSize > MaximumNumberOfLeds::Adalight" << buffSize << ">" << MaximumNumberOfLeds::Adalight;
+    if (buffSize > MaximumNumberOfLeds::Adalight)
+    {
+        qCritical() << Q_FUNC_INFO << "buffSize > MaximumNumberOfLeds::Adalight" << buffSize << ">" << MaximumNumberOfLeds::Adalight;
 
-		buffSize = MaximumNumberOfLeds::Adalight;
-	}
+        buffSize = MaximumNumberOfLeds::Adalight;
+    }
 
-	for (int i = 0; i < buffSize; i++)
-	{
-		m_colorsBuffer << StructRgb();
-	}
+    for (int i = 0; i < buffSize; i++)
+    {
+        m_colorsBuffer << StructRgb();
+    }
 
-	reinitBufferHeader(buffSize);
+    reinitBufferHeader(buffSize);
 }
 
 void LedDeviceAdalight::reinitBufferHeader(int ledsCount)
 {
-	m_writeBufferHeader.clear();
+    m_writeBufferHeader.clear();
 
-	// Initialize buffer header
-	int ledsCountHi = ((ledsCount - 1) >> 8) & 0xff;
-	int ledsCountLo = (ledsCount	- 1) & 0xff;
+    // Initialize buffer header
+    int ledsCountHi = ((ledsCount - 1) >> 8) & 0xff;
+    int ledsCountLo = (ledsCount	- 1) & 0xff;
 
-	m_writeBufferHeader.append((char)'A');
-	m_writeBufferHeader.append((char)'d');
-	m_writeBufferHeader.append((char)'a');
-	m_writeBufferHeader.append((char)ledsCountHi);
-	m_writeBufferHeader.append((char)ledsCountLo);
-	m_writeBufferHeader.append((char)(ledsCountHi ^ ledsCountLo ^ 0x55));
+    m_writeBufferHeader.append((char)'A');
+    m_writeBufferHeader.append((char)'d');
+    m_writeBufferHeader.append((char)'a');
+    m_writeBufferHeader.append((char)ledsCountHi);
+    m_writeBufferHeader.append((char)ledsCountLo);
+    m_writeBufferHeader.append((char)(ledsCountHi ^ ledsCountLo ^ 0x55));
 }

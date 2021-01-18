@@ -42,6 +42,14 @@ struct StructLab {
 	StructLab() { l = a = b = 0;}
 };
 
+// Not a new color space, the F is for floating point
+struct StructLabF {
+	double l;
+	double a;
+	double b;
+	StructLabF() { l = a = b = 0.0f;}
+};
+
 struct StructXyz {
 	double x, y, z;
 	StructXyz() { x = y = z = 0; }
