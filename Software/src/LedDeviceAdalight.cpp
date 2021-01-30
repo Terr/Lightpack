@@ -209,7 +209,8 @@ void LedDeviceAdalight::initColors(const QList<QRgb> & colors)
 void LedDeviceAdalight::UpdateTargetColor(const QList<QRgb> & colors)
 {
     // TODO: add as setting
-    const int numTransitions = 15;  // number of intermediate colors
+    //const int numTransitions = 15;  // number of intermediate colors
+    const int numTransitions = 8;  // number of intermediate colors
 
     targetColors = colors;
     for(int i = 0; i < targetColors.size(); i++)
